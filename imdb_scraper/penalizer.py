@@ -2,13 +2,23 @@
 import math
 
 
-def penalizer(rating: float, nr_rating: int, max_nr_rating: int,
-              deviation: int, deduction: float) -> float:
-    try:
-        decimal_index = str(rating).index('.')
-        precision = len(str(rating)) - decimal_index - 1
-    except ValueError:
-        precision = 1
+def penalizer(nr_rating: int, max_nr_rating: int,
+              deviation: int, deduction: float, precision: int) -> float:
+    """
+    Calculate penalty based on number of ratings.
 
-    new_rating = rating - (max_nr_rating - nr_rating) / deviation * deduction
-    return math.ceil(new_rating * 10**precision) / 10**precision
+    Args:
+        nr_rating (int): Number of ratings.
+        max_nr_rating (int): The maximum number of ratings i.e. benchmark.
+        deviation (int): The deviation used in the calculation of the penalty.
+        deduction (float): The deduction used in the calculation of the penalty.
+        precision (int): The precision used for rounding the final result.
+
+    """
+    try:
+        penalty = (max_nr_rating - nr_rating) / deviation * deduction
+    except ZeroDivisionError as exc:
+        raise ValueError("Invalid values for deviation or deduction "
+                         "- results in division by zero.") from exc
+
+    return math.ceil(penalty * 10**precision) / 10**precision
