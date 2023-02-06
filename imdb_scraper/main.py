@@ -1,18 +1,23 @@
-import pandas as pd
-from scraper import ImdbScraper
-from penalizer import penalizer
-from oscar import oscar_calculator
+import os
 from pathlib import Path
 
-MAX_NUM_MOOVIES = 20
-PENALTY_DEVIATION = 100000
-PENALTY_DEDUCTION = 0.1
+import pandas as pd
+import yaml
+from config import (MAX_NUM_MOOVIES, PATH_TO_CSV, PENALTY_DEDUCTION,
+                    PENALTY_DEVIATION)
+from log import log_error, log_info
+from oscar import oscar_calculator
+from penalizer import penalizer
+from scraper import ImdbScraper
 
 
-def run(path_to_csv: str):
+def run():
+
     # Extract top moovies statisticss
     scraper = ImdbScraper()
+    log_info('Getting moovies stats...')
     moovies_stats = scraper.get_moovie_stats(MAX_NUM_MOOVIES)
+    log_info('Successfully retrieved moovies stats...')
 
     # Convert result to pandas df for easier calculations
     moovies_stats_df = pd.DataFrame(moovies_stats)
@@ -37,5 +42,16 @@ def run(path_to_csv: str):
                                            + moovies_stats_df['oscars_reward'])
 
     # Save the result to csv
-    path_to_csv = Path(path_to_csv)
-    moovies_stats_df.to_csv(path_to_csv)
+    path_to_csv = Path(PATH_TO_CSV)
+    moovies_stats_df.to_csv(path_to_csv, encoding='utf-8')
+    log_info('Finished processing.')
+    print()
+    print(f'Result is at {str(path_to_csv)}')
+
+
+if __name__ == "__main__":
+    try:
+        run()
+    except Exception as exc:
+        log_error('Processing was unsuccessful.')
+        raise exc

@@ -8,8 +8,8 @@ import requests
 from bs4 import BeautifulSoup, ResultSet
 
 ### CONSTANTS ###
-BASE_URL = "https://www.imdb.com"  # IMDB url
-URL_TOP250 = "https://www.imdb.com/chart/top/"  # IMDB top 250 moovie list url
+BASE_URL = "https://www.imdb.com"
+URL_TOP250 = "https://www.imdb.com/chart/top/"
 HEADERS = {
     "Accept": "text/html",
     "DNT": "1",
@@ -28,16 +28,12 @@ def get_soup(url: str, headers: Optional[Dict] = None) -> BeautifulSoup:
         url (str): The URL to make the GET request to.
         headers (Optional[Dict]): Request header.
 
-    Returns:
-        BeautifulSoup: The BeautifulSoup object created from the response
-            of the GET request.
-
-    Raises:
-        requests.exceptions.HTTPError: If the GET request returns
-            an unsuccessful HTTP status code (status code >= 400).
     """
-    request = requests.get(url, headers=headers)
-    request.raise_for_status()
+    try:
+        request = requests.get(url, headers=headers)
+        request.raise_for_status()
+    except requests.exceptions.ConnectTimeout as exc:
+        print('Server connection timeout. Please retry later.')
 
     return BeautifulSoup(request.text, "html.parser")
 
@@ -86,6 +82,12 @@ class ImdbScraper:
         self.top250_results = top250.get_result()
 
     def get_moovie_stats(self, limit: int = 20) -> List[MoovieStats]:
+        """
+        Get moovie statistics.
+
+        Args:
+            limit (int): Max number of moovies to request.
+        """
         moovies = []
         for i in range(limit):
             rating = self.get_rating(i)
@@ -97,21 +99,45 @@ class ImdbScraper:
         return moovies
 
     def get_rating(self, index: int) -> float:
+        """
+        Retrieve the imdb rating of the moovie..
+
+        Args:
+            index (int): Index of the required item in the result list.
+        """
         moovie = self.top250_results[index]
         ir = moovie.find("span", attrs={"name": "ir"})["data-value"]
         return round(float(ir), 1)
 
     def get_nr_rating(self, index: int) -> int:
+        """
+        Retrieve the number of ratings.
+
+        Args:
+            index (int): Index of the required item in the result list.
+        """
         moovie = self.top250_results[index]
         nv = moovie.find("span", attrs={"name": "nv"})["data-value"]
         return int(nv)
 
     def get_title(self, index: int) -> str:
+        """
+        Retrieve the title of the moovie.
+
+        Args:
+            index (int): Index of the required item in the result list.
+        """
         moovie = self.top250_results[index]
         title = moovie.find("td", class_="titleColumn").a.text
         return title
 
     def get_nr_oscars(self, index: int) -> int:
+        """
+        Retrieve number of Oscar wins.
+
+        Args:
+            index (int): Index of the required item in the result list.
+        """
         url = self._get_moovie_url(index)
         one_moovie_result = self.one_moovie.get_result(url)
         awards_txt = one_moovie_result.li.a.text
@@ -126,13 +152,6 @@ class ImdbScraper:
         return base_url + href
 
     def _extract_oscar_wins(self, text: str, pattern: str) -> str:
-        """Extracts number of Oscar wins from text.
-
-        Args:
-            text (str): The input text to extract from.
-            pattern (str): The regular expression pattern to use for extraction.
-
-        """
         match = re.search(pattern, text)
         if match:
             return match.group(1)
