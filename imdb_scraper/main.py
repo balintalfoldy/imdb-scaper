@@ -1,11 +1,11 @@
 import os
+import logging
 from pathlib import Path
 
 import pandas as pd
 import yaml
 from config import (MAX_NUM_MOOVIES, PATH_TO_CSV, PENALTY_DEDUCTION,
                     PENALTY_DEVIATION)
-from log import log_error, log_info
 from oscar import oscar_calculator
 from penalizer import penalizer
 from scraper import ImdbScraper
@@ -13,11 +13,14 @@ from scraper import ImdbScraper
 
 def run():
 
+    # Configure logging
+    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+
     # Extract top moovies statisticss
     scraper = ImdbScraper()
-    log_info('Getting moovies stats...')
+    logging('Getting moovies stats...')
     moovies_stats = scraper.get_moovie_stats(MAX_NUM_MOOVIES)
-    log_info('Successfully retrieved moovies stats...')
+    logging('Successfully retrieved moovies stats...')
 
     # Convert result to pandas df for easier calculations
     moovies_stats_df = pd.DataFrame(moovies_stats)
@@ -44,7 +47,7 @@ def run():
     # Save the result to csv
     path_to_csv = Path(PATH_TO_CSV)
     moovies_stats_df.to_csv(path_to_csv, encoding='utf-8')
-    log_info('Finished processing.')
+    logging('Finished processing.')
     print()
     print(f'Result is at {str(path_to_csv)}')
 

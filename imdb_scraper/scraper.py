@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 import requests
+import logging
 from bs4 import BeautifulSoup, ResultSet
 
 ### CONSTANTS ###
@@ -16,6 +17,9 @@ HEADERS = {
     "Connection": "close",
     "User-Agent": "Firefox/66.0"
 }
+
+# Configure logging
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 # Helper function to requesting
 
@@ -34,6 +38,10 @@ def get_soup(url: str, headers: Optional[Dict] = None) -> BeautifulSoup:
         request.raise_for_status()
     except requests.exceptions.ConnectTimeout as exc:
         print('Server connection timeout. Please retry later.')
+        raise exc
+    except Exception as exc:
+        logging.error('Error during requesting data from remote.')
+        raise exc
 
     return BeautifulSoup(request.text, "html.parser")
 
