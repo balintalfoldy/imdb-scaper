@@ -27,7 +27,7 @@ cd imdb-scaper
 
 python -m venv venv
 
-venv/Scripts/activate
+venv\Scripts\activate
 ```
 
 ```
