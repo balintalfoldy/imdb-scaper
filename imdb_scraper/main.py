@@ -18,9 +18,9 @@ def run():
 
     # Extract top moovies statisticss
     scraper = ImdbScraper()
-    logging('Getting moovies stats...')
+    logging.info('Getting moovies stats...')
     moovies_stats = scraper.get_moovie_stats(MAX_NUM_MOOVIES)
-    logging('Successfully retrieved moovies stats...')
+    logging.info('Successfully retrieved moovies stats...')
 
     # Convert result to pandas df for easier calculations
     moovies_stats_df = pd.DataFrame(moovies_stats)
@@ -47,7 +47,7 @@ def run():
     # Save the result to csv
     path_to_csv = Path(PATH_TO_CSV)
     moovies_stats_df.to_csv(path_to_csv, encoding='utf-8')
-    logging('Finished processing.')
+    logging.info('Finished processing.')
     print()
     print(f'Result is at {str(path_to_csv)}')
 
@@ -56,5 +56,5 @@ if __name__ == "__main__":
     try:
         run()
     except Exception as exc:
-        log_error('Processing was unsuccessful.')
+        logging.error('Processing was unsuccessful.')
         raise exc

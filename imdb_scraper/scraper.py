@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 
 import requests
 import logging
-from bs4 import BeautifulSoup, ResultSet
+from bs4 import BeautifulSoup, ResultSet, Tag
 
 ### CONSTANTS ###
 BASE_URL = "https://www.imdb.com"
@@ -15,6 +15,7 @@ HEADERS = {
     "Accept": "text/html",
     "DNT": "1",
     "Connection": "close",
+    # Use Firefox or other browser app i.e. not python or else get error
     "User-Agent": "Firefox/66.0"
 }
 
@@ -66,7 +67,8 @@ class ImdbPageResult(ABC):
 
 class Top250PageResult(ImdbPageResult):
 
-    def get_result(self, url: str = URL_TOP250) -> List:
+    @classmethod
+    def get_result(cls, url: str = URL_TOP250) -> ResultSet:
         soup = get_soup(url=url, headers=HEADERS)
         result = soup.find('tbody',  class_="lister-list").find_all('tr')
         return result
@@ -74,7 +76,8 @@ class Top250PageResult(ImdbPageResult):
 
 class OneMooviePageResult(ImdbPageResult):
 
-    def get_result(self, url: str) -> List:
+    @classmethod
+    def get_result(cls, url: str) -> Tag:
         soup = get_soup(url=url, headers=HEADERS)
         result = soup.find("div", attrs={"data-testid": "awards"})
         return result
@@ -83,11 +86,10 @@ class OneMooviePageResult(ImdbPageResult):
 class ImdbScraper:
 
     def __init__(self,
-                 top250: Top250PageResult = Top250PageResult(),
-                 one_moovie: OneMooviePageResult = OneMooviePageResult()):
+                 top250: Top250PageResult = Top250PageResult,
+                 one_moovie: OneMooviePageResult = OneMooviePageResult):
         self.top250 = top250
         self.one_moovie = one_moovie
-        self.top250_results = top250.get_result()
 
     def get_moovie_stats(self, limit: int = 20) -> List[MoovieStats]:
         """
@@ -96,57 +98,56 @@ class ImdbScraper:
         Args:
             limit (int): Max number of moovies to request.
         """
+        top250_results = self.top250.get_result()
+
         moovies = []
         for i in range(limit):
-            rating = self.get_rating(i)
-            title = self.get_title(i)
-            nr_rating = self.get_nr_rating(i)
-            nr_oscars = self.get_nr_oscars(i)
+            rating = self.get_rating(top250_results[i])
+            title = self.get_title(top250_results[i])
+            nr_rating = self.get_nr_rating(top250_results[i])
+            url = self._get_moovie_url(top250_results[i])
+            nr_oscars = self.get_nr_oscars(url)
             stat = MoovieStats(rating, nr_rating, nr_oscars, title)
             moovies.append(stat)
         return moovies
 
-    def get_rating(self, index: int) -> float:
+    def get_rating(self, moovie: Tag) -> float:
         """
         Retrieve the imdb rating of the moovie..
 
         Args:
-            index (int): Index of the required item in the result list.
+            moovie (Tag): A moovie item.
         """
-        moovie = self.top250_results[index]
         ir = moovie.find("span", attrs={"name": "ir"})["data-value"]
         return round(float(ir), 1)
 
-    def get_nr_rating(self, index: int) -> int:
+    def get_nr_rating(self, moovie: Tag) -> int:
         """
         Retrieve the number of ratings.
 
         Args:
-            index (int): Index of the required item in the result list.
+            moovie (Tag): A moovie item.
         """
-        moovie = self.top250_results[index]
         nv = moovie.find("span", attrs={"name": "nv"})["data-value"]
         return int(nv)
 
-    def get_title(self, index: int) -> str:
+    def get_title(self, moovie: Tag) -> str:
         """
         Retrieve the title of the moovie.
 
         Args:
-            index (int): Index of the required item in the result list.
+            moovie (Tag): A moovie item.
         """
-        moovie = self.top250_results[index]
         title = moovie.find("td", class_="titleColumn").a.text
         return title
 
-    def get_nr_oscars(self, index: int) -> int:
+    def get_nr_oscars(self, url: str) -> int:
         """
         Retrieve number of Oscar wins.
 
         Args:
-            index (int): Index of the required item in the result list.
+            url (str): url of a moovie.
         """
-        url = self._get_moovie_url(index)
         one_moovie_result = self.one_moovie.get_result(url)
         awards_txt = one_moovie_result.li.a.text
 
@@ -154,8 +155,7 @@ class ImdbScraper:
                                              pattern=r"Won\s(\d+)\sOscars")
         return int(nr_oscars)
 
-    def _get_moovie_url(self, index: int, base_url: str = BASE_URL) -> str:
-        moovie = self.top250_results[index]
+    def _get_moovie_url(self, moovie: Tag, base_url: str = BASE_URL) -> str:
         href = moovie.find("td", class_="titleColumn").a['href']
         return base_url + href
 
