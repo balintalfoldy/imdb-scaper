@@ -66,24 +66,47 @@ class ImdbPageResult(ABC):
 
 
 class Top250PageResult(ImdbPageResult):
-
+    """
+    Class corresponding for imdb top 250 moovies page:
+    https://www.imdb.com/chart/top/?ref_=nv_mv_250
+    """
     @classmethod
     def get_result(cls, url: str = URL_TOP250) -> ResultSet:
+        """
+        Get the table data from:
+        https://www.imdb.com/chart/top/?ref_=nv_mv_250
+
+        Args:
+            url (str, optional): url to site. Defaults to URL_TOP250.
+
+        """
         soup = get_soup(url=url, headers=HEADERS)
         result = soup.find('tbody',  class_="lister-list").find_all('tr')
         return result
 
 
 class OneMooviePageResult(ImdbPageResult):
-
+    """
+    Class corresponding for one moove in imdb, for example:
+    https://www.imdb.com/title/tt0111161/
+    """
     @classmethod
     def get_result(cls, url: str) -> Tag:
+        """
+        Get the relevant data for a particular moovie.
+
+        Args:
+            url (str, optional): url to site.
+        """
         soup = get_soup(url=url, headers=HEADERS)
         result = soup.find("div", attrs={"data-testid": "awards"})
         return result
 
 
 class ImdbScraper:
+    """
+    Scraper class containing all functionalities to process moovie data.
+    """
 
     def __init__(self,
                  top250: Top250PageResult = Top250PageResult,
