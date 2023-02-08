@@ -1,0 +1,7 @@
+# Config parameters
+MAX_NUM_MOOVIES: 20
+PENALTY_DEVIATION: 100000
+PENALTY_DEDUCTION: 0.1
+
+# Set path to save the result csv
+PATH_TO_CSV: "c:/Data/Interviews/Datapao/result.csv"

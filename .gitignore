@@ -1,3 +1,10 @@
 # virtual env
 venv/
 
+# some result file
+result.csv
+
+# cache
+.pytest_cache/
+tests/__pycache__/
+imdb_scraper/__pycache__/
